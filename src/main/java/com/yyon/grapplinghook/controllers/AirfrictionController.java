@@ -49,6 +49,12 @@ public class AirfrictionController extends GrappleController {
 			this.updateServerPos();
 			return;
 		}
+		
+		// allows safe releasing of grapple when on a ladder
+		if(entity instanceof LivingEntity living && living.onClimbable()) {
+			this.unattach();
+			return;
+		}
 
 		Vec additionalmotion = new Vec(0,0,0);
 		
