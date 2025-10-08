@@ -8,6 +8,7 @@ import com.yyon.grapplinghook.controllers.ForcefieldController;
 import com.yyon.grapplinghook.controllers.GrappleController;
 import com.yyon.grapplinghook.items.KeypressItem;
 import com.yyon.grapplinghook.utils.Vec;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.Input;
 import net.minecraft.core.BlockPos;
@@ -38,7 +39,25 @@ public class ClientEventHandlers {
 	    MinecraftForge.EVENT_BUS.register(this);
 	}
 
-	public boolean prevKeys[] = {false, false, false, false, false};
+        private static class HeldKey {
+                private final KeyMapping mapping;
+                private final KeypressItem.Keys key;
+                private boolean held;
+
+                private HeldKey(KeyMapping mapping, KeypressItem.Keys key) {
+                        this.mapping = mapping;
+                        this.key = key;
+                        this.held = false;
+                }
+        }
+
+        private final HeldKey[] keyStates = {
+                new HeldKey(ClientSetup.key_enderlaunch, KeypressItem.Keys.LAUNCHER),
+                new HeldKey(ClientSetup.key_leftthrow, KeypressItem.Keys.THROWLEFT),
+                new HeldKey(ClientSetup.key_rightthrow, KeypressItem.Keys.THROWRIGHT),
+                new HeldKey(ClientSetup.key_boththrow, KeypressItem.Keys.THROWBOTH),
+                new HeldKey(ClientSetup.key_rocket, KeypressItem.Keys.ROCKET)
+        };
 	
 	@SubscribeEvent
 	public void onClientTick(TickEvent.ClientTickEvent event) {
@@ -47,35 +66,36 @@ public class ClientEventHandlers {
 			if (!Minecraft.getInstance().isPaused()) {
 				ClientControllerManager.instance.onClientTick(player);
 				
-				if (Minecraft.getInstance().screen == null) {
-					// keep in same order as enum from KeypressItem
-					boolean keys[] = {ClientSetup.key_enderlaunch.isDown(), ClientSetup.key_leftthrow.isDown(), ClientSetup.key_rightthrow.isDown(), ClientSetup.key_boththrow.isDown(), ClientSetup.key_rocket.isDown()};
-					
-					for (int i = 0; i < keys.length; i++) {
-						boolean iskeydown = keys[i];
-						boolean prevkey = prevKeys[i];
-						
-						if (iskeydown != prevkey) {
-							KeypressItem.Keys key = KeypressItem.Keys.values()[i];
-							
-							ItemStack stack = getKeypressStack(player);
-							if (stack != null) {
-								if (!isLookingAtModifierBlock(player)) {
-									if (iskeydown) {
-										((KeypressItem) stack.getItem()).onCustomKeyDown(stack, player, key, true);
-									} else {
-										((KeypressItem) stack.getItem()).onCustomKeyUp(stack, player, key, true);
-									}
-								}
-							}
-						}
-						
-						prevKeys[i] = iskeydown;
-					}
-				}
-			}
-		}
-	}
+                                if (Minecraft.getInstance().screen == null) {
+                                        for (HeldKey keyState : keyStates) {
+                                                while (keyState.mapping.consumeClick()) {
+                                                        keyState.held = true;
+                                                        triggerKeyDown(player, keyState);
+                                                }
+
+                                                if (keyState.held && !keyState.mapping.isDown()) {
+                                                        triggerKeyUp(player, keyState);
+                                                        keyState.held = false;
+                                                }
+                                        }
+                                }
+                        }
+                }
+        }
+
+        private void triggerKeyDown(Player player, HeldKey keyState) {
+                ItemStack stack = getKeypressStack(player);
+                if (stack != null && !isLookingAtModifierBlock(player)) {
+                        ((KeypressItem) stack.getItem()).onCustomKeyDown(stack, player, keyState.key, true);
+                }
+        }
+
+        private void triggerKeyUp(Player player, HeldKey keyState) {
+                ItemStack stack = getKeypressStack(player);
+                if (stack != null && !isLookingAtModifierBlock(player)) {
+                        ((KeypressItem) stack.getItem()).onCustomKeyUp(stack, player, keyState.key, true);
+                }
+        }
 	
 	@SubscribeEvent
     public void onBlockBreak(BreakEvent event) {
