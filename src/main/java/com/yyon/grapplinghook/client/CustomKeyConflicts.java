@@ -1,7 +1,7 @@
 package com.yyon.grapplinghook.client;
 
-import net.minecraft.world.entity.vehicle.Minecart;
 import net.minecraftforge.client.settings.IKeyConflictContext;
+import net.minecraftforge.client.settings.KeyConflictContext;
 
 public enum CustomKeyConflicts implements IKeyConflictContext {
     INGAME_NO_CONFLICT{
@@ -11,8 +11,10 @@ public enum CustomKeyConflicts implements IKeyConflictContext {
         }
 
         @Override
-        public boolean conflicts(IKeyConflictContext iKeyConflictContext) {
-            return false;
+        public boolean conflicts(IKeyConflictContext other) {
+            // Treat this context as conflicting with IN_GAME so KeyModifier.NONE remains active
+            // even when Shift/Ctrl/Alt are held during in-game input.
+            return other == KeyConflictContext.IN_GAME || other == this;
         }
     };
 }

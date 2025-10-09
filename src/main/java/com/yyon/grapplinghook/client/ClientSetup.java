@@ -61,9 +61,9 @@ public class ClientSetup {
         public static KeyMapping key_slide = createKeyBinding(new KeyMapping("key.slide.desc", GLFW.GLFW_KEY_LEFT_SHIFT, "key.grapplemod.category"));
 
         static {
-                key_boththrow.setKeyModifierAndCode(KeyModifier.ANY, key_boththrow.getKey());
-                key_enderlaunch.setKeyModifierAndCode(KeyModifier.ANY, key_enderlaunch.getKey());
-                key_rocket.setKeyModifierAndCode(KeyModifier.ANY, key_rocket.getKey());
+                key_boththrow.setKeyModifierAndCode(KeyModifier.NONE, key_boththrow.getKey());
+                key_enderlaunch.setKeyModifierAndCode(KeyModifier.NONE, key_enderlaunch.getKey());
+                key_rocket.setKeyModifierAndCode(KeyModifier.NONE, key_rocket.getKey());
         }
 	@SubscribeEvent
 	public static void clientSetup(final FMLClientSetupEvent event) {
